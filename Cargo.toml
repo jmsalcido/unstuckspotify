@@ -1,0 +1,12 @@
+[package]
+name = "unstuck_spotify"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.29" # egui-based cross-platform UI (macOS / Windows / Linux)
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true

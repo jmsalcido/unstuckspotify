@@ -1,0 +1,21 @@
+# Rust / Cargo
+/target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+
+# Local build artifacts
+*.dmg
+*.app
+*.exe
+*.msi
+
+# Logs / debug
+*.log
