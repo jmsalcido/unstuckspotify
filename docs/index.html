@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unstuck Spotify — Fix a hung or crashed Spotify app</title>
+<meta name="description" content="A small cross-platform app that fixes a hung or crashed Spotify app: clear the cache (safe) or do a full reset. Free, open source, macOS / Windows / Linux.">
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+  :root {
+    --black: #191414;
+    --black-alt: #121212;
+    --panel: #242424;
+    --panel-2: #181818;
+    --green: #1DB954;
+    --green-bright: #1ED760;
+    --text: #ffffff;
+    --text-dim: #b3b3b3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--green-bright); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .container { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Hero ─────────────────────────────────────────── */
+  header {
+    padding: 72px 0 48px;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(29, 185, 84, 0.16), transparent),
+      var(--black-alt);
+  }
+  .hero { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+  .hero img {
+    width: 120px; height: 120px;
+    border-radius: 28px;
+    box-shadow: 0 8px 40px rgba(29, 185, 84, 0.25);
+  }
+  .hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -0.5px; }
+  .hero .tagline { color: var(--text-dim); font-size: 18px; margin-top: 6px; }
+
+  /* ── Download card ────────────────────────────────── */
+  .download-card {
+    background: var(--panel);
+    border: 1px solid #2e2e2e;
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 40px;
+  }
+  .download-card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+  .os-detect {
+    display: inline-block;
+    background: rgba(29, 185, 84, 0.12);
+    color: var(--green-bright);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 15px;
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .btn:hover { text-decoration: none; transform: scale(1.04); }
+  .btn-primary { background: var(--green); color: var(--black-alt); }
+  .btn-primary:hover { background: var(--green-bright); }
+  .btn-secondary { background: #333; color: var(--text); }
+  .btn-secondary:hover { background: #3d3d3d; }
+  .btn .os { font-size: 13px; font-weight: 500; color: var(--text-dim); }
+  .btn-primary .os { color: rgba(0, 0, 0, 0.65); }
+  .btn-primary .os-badge { font-weight: 700; }
+  .btn-primary .os-badge.os-other { display: none; }
+  .btn-secondary .os-badge.os-recommended { display: none; }
+  .checksum-note { color: var(--text-dim); font-size: 13px; margin-top: 16px; }
+  .checksum-note code { background: var(--black-alt); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  .all-releases { margin-top: 10px; font-size: 14px; }
+
+  /* ── Sections ─────────────────────────────────────── */
+  section { padding: 56px 0; }
+  section h2 { font-size: 28px; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.3px; }
+  .muted { color: var(--text-dim); }
+
+  .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 680px) { .steps { grid-template-columns: 1fr; } }
+  .step-card {
+    background: var(--panel-2);
+    border: 1px solid #2e2e2e;
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .step-card .step-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--green);
+    font-weight: 700;
+  }
+  .step-card.nuclear .step-label { color: var(--text-dim); }
+  .step-card h3 { font-size: 20px; margin: 6px 0 8px; }
+  .step-card p { color: var(--text-dim); font-size: 14.5px; }
+
+  /* ── How it works ─────────────────────────────────── */
+  .how { display: grid; gap: 14px; }
+  .how-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: var(--panel-2);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .how-item .num {
+    flex: none;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--black-alt);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    margin-top: 2px;
+  }
+  .how-item p { color: var(--text-dim); font-size: 14.5px; }
+  .how-item p b { color: var(--text); }
+
+  /* ── macOS note ───────────────────────────────────── */
+  .note {
+    background: rgba(29, 185, 84, 0.08);
+    border: 1px solid rgba(29, 185, 84, 0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 14.5px;
+    color: var(--text-dim);
+  }
+  .note b { color: var(--text); }
+  .note code {
+    background: var(--black-alt);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    color: var(--green-bright);
+  }
+
+  /* ── Footer ───────────────────────────────────────── */
+  footer {
+    padding: 40px 0 56px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    border-top: 1px solid #222;
+  }
+  footer .disclaimer { font-size: 12px; margin-top: 14px; opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="hero">
+      <img src="logo.png" alt="Unstuck Spotify logo">
+      <div>
+        <h1>Unstuck Spotify</h1>
+        <p class="tagline">Fix a hung or crashed Spotify app in one click.</p>
+      </div>
+    </div>
+
+    <div class="download-card">
+      <h2>Download</h2>
+      <div class="os-detect" id="os-detect">Detecting your platform…</div>
+      <div class="btn-row">
+        <a class="btn btn-primary"
+           href="https://github.com/jmsalcido/unstuckspotify/releases/latest/download/UnstuckSpotify-macos-arm64.tar.gz"
+           data-os="macos-arm64">
+          <span class="icon">⬇</span>
+          <span class="os-badge">Download</span>
+          <span class="os">macOS · Apple Silicon · 1.9 MB</span>
+        </a>
+        <a class="btn btn-primary"
+           href="https://github.com/jmsalcido/unstuckspotify/releases/latest/download/UnstuckSpotify-macos-intel.tar.gz"
+           data-os="macos-intel">
+          <span class="icon">⬇</span>
+          <span class="os-badge">Download</span>
+          <span class="os">macOS · Intel · 2.0 MB</span>
+        </a>
+        <a class="btn btn-primary"
+           href="https://github.com/jmsalcido/unstuckspotify/releases/latest/download/UnstuckSpotify-windows-x64.zip"
+           data-os="windows">
+          <span class="icon">⬇</span>
+          <span class="os-badge">Download</span>
+          <span class="os">Windows · 2.1 MB</span>
+        </a>
+        <a class="btn btn-primary"
+           href="https://github.com/jmsalcido/unstuckspotify/releases/latest/download/UnstuckSpotify-linux-x64.tar.gz"
+           data-os="linux">
+          <span class="icon">⬇</span>
+          <span class="os-badge">Download</span>
+          <span class="os">Linux · 4.2 MB</span>
+        </a>
+      </div>
+      <p class="checksum-note">Every download has a <code>.sha256</code> checksum file to verify integrity.</p>
+      <p class="all-releases">Looking for another version? <a href="https://github.com/jmsalcido/unstuckspotify/releases">All releases</a></p>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="container">
+    <h2>Two ways to fix it</h2>
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-label">Step 1 · Clear cache</div>
+        <h3>Safe fix</h3>
+        <p>Quits Spotify, deletes its cache. Keeps your login and playlists.
+        Try this first — it fixed the bloated-cache hang in one shot.</p>
+      </div>
+      <div class="step-card nuclear">
+        <div class="step-label">Step 2 · Full reset</div>
+        <h3>The nuclear option</h3>
+        <p>Removes app data, preferences and caches. You'll be logged out —
+        playlists re-sync automatically from the cloud.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>How it works</h2>
+    <div class="how">
+      <div class="how-item"><div class="num">1</div>
+        <p><b>Quits Spotify gracefully.</b> If it won't quit, it force-kills the process —
+        including the stale <code>SingletonLock</code> left behind by a hung instance.</p></div>
+      <div class="how-item"><div class="num">2</div>
+        <p><b>Deletes the right paths, nothing else.</b> Cache locations per OS:
+        <code>~/Library/Caches/com.spotify.client</code> on macOS,
+        <code>%APPDATA%\Spotify</code> on Windows, <code>~/.cache/spotify</code> on Linux.</p></div>
+      <div class="how-item"><div class="num">3</div>
+        <p><b>Never touches your library.</b> Playlists live in Spotify's cloud —
+        they're never lost, even after a full reset.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <h2>Running on macOS</h2>
+    <div class="note">
+      <b>macOS may block the app on first launch</b> because the binary isn't notarized.
+      Right-click the app → <b>Open</b>, or run once:
+      <code>xattr -d com.apple.quarantine ./unstuck_spotify</code>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p><a href="https://github.com/jmsalcido/unstuckspotify">View source on GitHub</a> ·
+       <a href="https://github.com/jmsalcido/unstuckspotify/releases">Releases</a> ·
+       <a href="https://github.com/jmsalcido/unstuckspotify/issues">Report an issue</a></p>
+    <p class="disclaimer">Unstuck Spotify is not affiliated with, endorsed by, or connected to Spotify AB.
+    "Spotify" is a trademark of Spotify AB.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var ua = navigator.userAgent;
+  var platform = null;
+  if (/Macintosh|Mac OS X/i.test(ua)) {
+    platform = /arm64|iPhone|iPad/i.test(ua) || /x86_64/.test(ua) === false ? "macos-arm64" : "macos-intel";
+    // Firefox on Apple Silicon reports "x86_64" or "Intel"; use this heuristic instead.
+    if (/Macintosh/.test(navigator.userAgent)) {
+      try {
+        // macOS 10.15+ supports platform; "Intel" means Intel Mac on most browsers.
+        var p = navigator.platform;
+        if (p === "MacIntel" && !/arm64/.test(ua)) {
+          // Chrome 90+ on Apple Silicon still reports "MacIntel" — detect via UA-CH if available.
+          var isSilicon = true;
+          if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+            navigator.userAgentData.getHighEntropyValues(["architecture", "platformVersion"])
+              .then(function (h) {
+                platform = h.architecture === "arm" ? "macos-arm64" : "macos-intel";
+                highlight(platform);
+              });
+            return;
+          }
+          // Safari reports MacIntel on both — fall back to screen heuristics.
+          platform = "macos-arm64";
+        }
+      } catch (e) {}
+    }
+  } else if (/Windows/i.test(ua)) {
+    platform = "windows";
+  } else if (/Linux/i.test(ua) && !/Android/i.test(ua)) {
+    platform = "linux";
+  } else if (/Android/i.test(ua)) {
+    platform = "linux";
+  }
+
+  var label = document.getElementById("os-detect");
+  var names = {
+    "macos-arm64": "Detected: macOS · Apple Silicon",
+    "macos-intel": "Detected: macOS · Intel",
+    "windows": "Detected: Windows",
+    "linux": "Detected: Linux"
+  };
+
+  function highlight(platform) {
+    if (!platform) { label.textContent = "Showing all downloads"; return; }
+    label.textContent = names[platform] || "Showing all downloads";
+    document.querySelectorAll(".btn-primary").forEach(function (b) {
+      if (b.dataset.os === platform) {
+        b.classList.add("btn-primary");
+        b.querySelector(".os-badge").textContent = "Recommended for you";
+        b.querySelector(".os-badge").classList.add("os-recommended");
+      } else {
+        b.classList.remove("btn-primary");
+        b.classList.add("btn-secondary");
+        b.querySelector(".os-badge").textContent = "Download";
+      }
+    });
+  }
+
+  highlight(platform);
+})();
+</script>
+
+</body>
+</html>
